@@ -1,0 +1,28 @@
+WaterfallData = 
+    UNION(
+        ROW(
+            "Category", "Received",
+            "Value", [Received] * -1,
+            "Label", "Received (" & IF([Received] < 0, "", "+") & [Received] & ")"
+        ),
+        ROW(
+            "Category", "Processed",
+            "Value", [Processed] * -1,
+            "Label", "Processed (" & IF([Processed] < 0, "", "+") & [Processed] & ")"
+        ),
+        ROW(
+            "Category", "Rejected",
+            "Value", [Rejected] * -1,
+            "Label", "Rejected (" & IF([Rejected] < 0, "", "+") & [Rejected] & ")"
+        ),
+        ROW(
+            "Category", "Appeals",
+            "Value", [Appeals] * -1,
+            "Label", "Appeals (" & IF([Appeals] < 0, "", "+") & [Appeals] & ")"
+        ),
+        ROW(
+            "Category", "Filed",
+            "Value", [Filed],
+            "Label", "Filed (" & IF([Filed] < 0, "", "+") & [Filed] & ")"
+        ) // Positive value
+    )
