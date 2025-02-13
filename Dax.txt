@@ -1,13 +1,35 @@
-WaterfallData =
+WaterfallData = 
 ADDCOLUMNS(
-    GENERATE(
-        {"Received", "Processed", "Rejected", "Appeals", "Filed"},
-        ROW("Category", CURRENTVALUE)
+    DATATABLE(
+        "Category", STRING,
+        {
+            {"Received"}, 
+            {"Processed"}, 
+            {"Rejected"}, 
+            {"Appeals"}, 
+            {"Filed"}
+        }
     ),
-    "Value", IF([Category] = "Filed", [Filed], -1 * SWITCH([Category], 
-        "Received", [Received], 
-        "Processed", [Processed], 
-        "Rejected", [Rejected], 
-        "Appeals", [Appeals])
+    "Value", SWITCH([Category],
+        "Received", [Received] * -1,
+        "Processed", [Processed] * -1,
+        "Rejected", [Rejected] * -1,
+        "Appeals", [Appeals] * -1,
+        "Filed", [Filed]
     ),
-    "Label", [Category] & " (" & IF([Filed] >=+ ]
+    "Label", [Category] & " (" & IF(
+        SWITCH([Category],
+            "Received", [Received],
+            "Processed", [Processed],
+            "Rejected", [Rejected],
+            "Appeals", [Appeals],
+            "Filed", [Filed]
+        ) < 0, "", "+"
+    ) & SWITCH([Category],
+        "Received", [Received],
+        "Processed", [Processed],
+        "Rejected", [Rejected],
+        "Appeals", [Appeals],
+        "Filed", [Filed]
+    ) & ")"
+)
