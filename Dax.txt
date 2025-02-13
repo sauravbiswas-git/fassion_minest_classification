@@ -1,0 +1,13 @@
+WaterfallData =
+ADDCOLUMNS(
+    GENERATE(
+        {"Received", "Processed", "Rejected", "Appeals", "Filed"},
+        ROW("Category", CURRENTVALUE)
+    ),
+    "Value", IF([Category] = "Filed", [Filed], -1 * SWITCH([Category], 
+        "Received", [Received], 
+        "Processed", [Processed], 
+        "Rejected", [Rejected], 
+        "Appeals", [Appeals])
+    ),
+    "Label", [Category] & " (" & IF([Filed] >=+ ]
