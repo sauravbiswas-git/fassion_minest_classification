@@ -36,17 +36,23 @@ class TableauHeadlessScreenshot:
         response = requests.post(url, json=payload, headers=headers)
         if response.status_code == 200:
             try:
-                # Try JSON first
                 self.auth_token = response.json()['credentials']['token']
-                print("Signed in using JSON response.")
             except ValueError:
-                # Fallback to XML parsing
-                print("Fallback to XML response.")
                 root = ET.fromstring(response.text)
                 ns = {"t": "http://tableau.com/api"}
                 self.auth_token = root.find(".//t:credentials", ns).attrib['token']
-            self.session_id = response.cookies.get('workgroup_session_id')
-            print(f"Session cookie: {self.session_id}")
+            print("Signed in. Token received.")
+
+            # Call /me to get session cookie
+            me_url = f"{self.server}/api/{self.api_version}/me"
+            me_headers = {"X-Tableau-Auth": self.auth_token}
+            me_response = requests.get(me_url, headers=me_headers)
+
+            # Extract session cookie
+            self.session_id = me_response.cookies.get('workgroup_session_id')
+            if not self.session_id:
+                raise Exception("Session ID not found in /me response cookies.")
+            print(f"Session ID obtained: {self.session_id}")
         else:
             raise Exception(f"Failed to sign in: {response.status_code} - {response.text}")
 
@@ -62,19 +68,20 @@ class TableauHeadlessScreenshot:
         if not self.session_id:
             raise Exception("Session ID not available.")
 
+        user_data_dir = f"/tmp/chrome-profile-{int(time.time())}"
         command = [
             "google-chrome",
             "--headless",
             "--disable-gpu",
             "--no-sandbox",
             "--window-size=1920,1080",
-            f"--user-data-dir=/tmp/chrome-data-{int(time.time())}",
+            f"--user-data-dir={user_data_dir}",
             f"--cookie=workgroup_session_id={self.session_id}",
             f"--screenshot={output_file}",
             url
         ]
         print(f"Running Chrome to capture: {output_file}")
-        subprocess.run(command)
+        subprocess.run(command, check=True)
 
     def export_images_with_filters(self, view_path, filters_list, output_dir="output"):
         os.makedirs(output_dir, exist_ok=True)
@@ -93,8 +100,8 @@ class TableauHeadlessScreenshot:
 
 
 if __name__ == "__main__":
-    # Replace this with your actual workbook and view path (viz-style URL)
-    view_path = "YourWorkbook/YourViewName"  # e.g., "SalesWorkbook/OverviewDashboard"
+    # Viz-style view path: Workbook/ViewName
+    view_path = "SalesWorkbook/SalesDashboard"  # Replace with yours
 
     filters_list = [
         {"Region": "North"},
@@ -106,4 +113,4 @@ if __name__ == "__main__":
     exporter.sign_in()
     exporter.export_images_with_filters(view_path, filters_list)
     exporter.sign_out()
-            
+    
