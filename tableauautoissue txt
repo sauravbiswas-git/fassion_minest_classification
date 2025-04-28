@@ -1,0 +1,16 @@
+When using the Tableau REST API to export dashboard images (/views/{view_id}/image), Tableau can serve cached images, especially when you're applying filters via the query string (vf_<filter_name>). This often leads to:
+
+Old or stale data showing up.
+
+Filters being ignored silently in the exported image.
+
+
+
+
+the /views/{view_id}/image endpoint does not always re-render the view, even with cache-busting tricks like timestamps. It often returns cached images that don’t reflect recent extract refreshes or live connection updates.
+Why this happens
+Tableau’s REST API image and previewImage endpoints often serve from vizql-server cache.
+
+They do not trigger full viz rendering like the actual Tableau frontend.
+
+Even with vf_ filters and cache-busting query params, Tableau may still pull stale content.
