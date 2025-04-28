@@ -17,26 +17,31 @@ class TableauDashboardExporter:
         return views_df[views_df['workbookName'] == workbook_name]
 
     def refresh_workbook_extract(self, workbook_name):
-        """Trigger extract refresh for the given workbook."""
-        workbooks_df = get_workbooks_dataframe(self.connection)
-        workbook = workbooks_df[workbooks_df['name'] == workbook_name]
+    """Trigger an extract refresh for the given workbook."""
+    workbooks_df = get_workbooks_dataframe(self.connection)
+    workbook = workbooks_df[workbooks_df['name'] == workbook_name]
 
-        if workbook.empty:
-            print(f"Workbook '{workbook_name}' not found.")
-            return None
+    if workbook.empty:
+        print(f"Workbook '{workbook_name}' not found.")
+        return None
 
-        workbook_id = workbook['id'].values[0]
-        print(f"Triggering extract refresh for workbook: {workbook_name} (ID: {workbook_id})")
+    workbook_id = workbook['id'].values[0]
+    print(f"Triggering extract refresh for workbook: {workbook_name} (ID: {workbook_id})")
 
-        response = self.connection.refresh_workbook(workbook_id=workbook_id)
+    url = f"{self.connection.server}/api/{self.connection.api_version}/sites/{self.connection.site_id}/workbooks/{workbook_id}/refresh"
+    headers = {"X-Tableau-Auth": self.connection.auth_token}
 
-        if response.status_code == 202:
-            print("Refresh started successfully.")
-            return response.json()['job']['id']  # Return job ID to track it
-        else:
-            print(f"Failed to start refresh. Status: {response.status_code}")
-            print(response.content)
-            return None
+    response = requests.post(url, headers=headers)
+
+    if response.status_code == 202:
+        print("Refresh started successfully.")
+        job_id = response.json()['job']['id']
+        return job_id
+    else:
+        print(f"Failed to start refresh. Status: {response.status_code}")
+        print(response.content)
+        return None
+        
 
     def wait_for_job_completion(self, job_id, timeout=600):
         """Poll the job status until it completes or times out."""
