@@ -31,7 +31,7 @@ class TableauDashboardExporter:
     url = f"{self.connection.server}/api/{self.connection.api_version}/sites/{self.connection.site_id}/workbooks/{workbook_id}/refresh"
     headers = {"X-Tableau-Auth": self.connection.auth_token}
 
-    response = requests.post(url, headers=headers)
+    response = requests.post(url, headers=headers, data={})  # <<== fixed here
 
     if response.status_code == 202:
         print("Refresh started successfully.")
@@ -41,6 +41,7 @@ class TableauDashboardExporter:
         print(f"Failed to start refresh. Status: {response.status_code}")
         print(response.content)
         return None
+        
         
 
     def wait_for_job_completion(self, job_id, timeout=600):
